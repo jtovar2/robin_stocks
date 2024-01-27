@@ -137,12 +137,12 @@ def create_session_on_db(username=None, password=None, expiresIn=691200, scope='
     # Handle case where mfa or challenge is required.
     if data:
         if 'mfa_required' in data:
-            resp_obj = {'verification_type': 'mfa_required'}
+            resp_obj = {'verification_type': 'mfa_required', 'payload' : payload, 'url': url}
             return resp_obj
 
         elif 'challenge' in data:
             challenge_id = data['challenge']['id']
-            resp_obj = {'verification_type': 'challenge', 'challenge_id' :challenge_id}
+            resp_obj = {'verification_type': 'challenge', 'challenge_id' :challenge_id, 'payload' : payload, 'url': url}
             return resp_obj
         # Update Session data with authorization or raise exception with the information present in data.
         if 'access_token' in data:
