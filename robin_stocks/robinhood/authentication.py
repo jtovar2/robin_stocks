@@ -56,15 +56,13 @@ def respond_to_challenge(challenge_id, sms_code):
 
 
 
-def handle_mfa_challenge(payload, url, dsClient, pickle_name):
-    mfa_token = input("Please type in the MFA code: ")
+def handle_mfa_challenge(payload, url, dsClient, pickle_name, mfa_token):
+    objct = dict()
+    objct['success'] = False
     payload['mfa_code'] = mfa_token
     res = request_post(url, payload, jsonify_data=False)
-    while (res.status_code != 200):
-        mfa_token = input(
-            "That MFA code was not correct. Please type in another MFA code: ")
-        payload['mfa_code'] = mfa_token
-        res = request_post(url, payload, jsonify_data=False)
+    if (res.status_code != 200):
+        return objct
     data = res.json()
     if 'access_token' in data:
         token = '{0} {1}'.format(data['token_type'], data['access_token'])
@@ -84,16 +82,18 @@ def handle_mfa_challenge(payload, url, dsClient, pickle_name):
         new_entity['expires_on'] = datetime.datetime.now() + datetime.timedelta(days=8)
         entity.update(new_entity)
         dsClient.put(entity)
-    return data
+        objct['success'] = True
+    return objct
 
-def handle_sms_challenge(challenge_id,url , payload, dsClient, pickle_name):
+def handle_sms_challenge(challenge_id,url , payload, dsClient, pickle_name, sms_code):
 
     sms_code = input('Enter Robinhood code for validation: ')
     res = respond_to_challenge(challenge_id, sms_code)
-    while 'challenge' in res and res['challenge']['remaining_attempts'] > 0:
-        sms_code = input('That code was not correct. {0} tries remaining. Please type in another code: '.format(
-            res['challenge']['remaining_attempts']))
-        res = respond_to_challenge(challenge_id, sms_code)
+    objct = dict()
+    objct['success'] = False
+    if 'challenge' in res:
+        objct['remaining_attempts'] = res['challenge']['remaining_attempts']
+        return objct
     update_session(
         'X-ROBINHOOD-CHALLENGE-RESPONSE-ID', challenge_id)
     data = request_post(url, payload)
@@ -115,7 +115,8 @@ def handle_sms_challenge(challenge_id,url , payload, dsClient, pickle_name):
         new_entity['expires_on'] = datetime.datetime.now() + datetime.timedelta(days=8)
         entity.update(new_entity)
         dsClient.put(entity)
-    return data
+        objct['success'] = True
+    return  objct
 
 
 
