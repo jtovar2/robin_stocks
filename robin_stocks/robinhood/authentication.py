@@ -1,4 +1,5 @@
 """Contains all functions for the purpose of logging in and out to Robinhood."""
+import datetime
 import getpass
 import json
 import os
@@ -55,7 +56,7 @@ def respond_to_challenge(challenge_id, sms_code):
 
 
 
-def handle_mfa_challenge(payload, url):
+def handle_mfa_challenge(payload, url, dsClient, pickle_name):
     mfa_token = input("Please type in the MFA code: ")
     payload['mfa_code'] = mfa_token
     res = request_post(url, payload, jsonify_data=False)
@@ -65,9 +66,27 @@ def handle_mfa_challenge(payload, url):
         payload['mfa_code'] = mfa_token
         res = request_post(url, payload, jsonify_data=False)
     data = res.json()
+    if 'access_token' in data:
+        token = '{0} {1}'.format(data['token_type'], data['access_token'])
+        update_session('Authorization', token)
+        set_login_state(True)
+        data['detail'] = "logged in with brand new authentication code."
+
+        oauth_obj = {'token_type': data['token_type'],
+                     'access_token': data['access_token'],
+                     'refresh_token': data['refresh_token'],
+                     'device_token': payload['device_token']}
+        key = dsClient.key('aaf-crypto-bot-sessions', pickle_name)
+        entity = datastore.Entity(key=key)
+        new_entity = dict()
+        new_entity['session'] = zlib.compress(json.dumps(oauth_obj).encode('utf-8'), 9)
+        new_entity['user'] = pickle_name
+        new_entity['expires_on'] = datetime.datetime.now() + datetime.timedelta(days=8)
+        entity.update(new_entity)
+        dsClient.put(entity)
     return data
 
-def handle_sms_challenge(challenge_id,url , payload):
+def handle_sms_challenge(challenge_id,url , payload, dsClient, pickle_name):
 
     sms_code = input('Enter Robinhood code for validation: ')
     res = respond_to_challenge(challenge_id, sms_code)
@@ -78,6 +97,24 @@ def handle_sms_challenge(challenge_id,url , payload):
     update_session(
         'X-ROBINHOOD-CHALLENGE-RESPONSE-ID', challenge_id)
     data = request_post(url, payload)
+    if 'access_token' in data:
+        token = '{0} {1}'.format(data['token_type'], data['access_token'])
+        update_session('Authorization', token)
+        set_login_state(True)
+        data['detail'] = "logged in with brand new authentication code."
+
+        oauth_obj = {'token_type': data['token_type'],
+                     'access_token': data['access_token'],
+                     'refresh_token': data['refresh_token'],
+                     'device_token': payload['device_token']}
+        key = dsClient.key('aaf-crypto-bot-sessions', pickle_name)
+        entity = datastore.Entity(key=key)
+        new_entity = dict()
+        new_entity['session'] = zlib.compress(json.dumps(oauth_obj).encode('utf-8'), 9)
+        new_entity['user'] = pickle_name
+        new_entity['expires_on'] = datetime.datetime.now() + datetime.timedelta(days=8)
+        entity.update(new_entity)
+        dsClient.put(entity)
     return data
 
 
@@ -271,6 +308,8 @@ def login_fom_db(username=None, password=None, expiresIn=691200, scope='internal
             entity = datastore.Entity(key=key)
             new_entity = dict()
             new_entity['session'] = zlib.compress(json.dumps(oauth_obj).encode('utf-8'), 9)
+            new_entity['user'] = pickle_name
+            new_entity['expires_on'] = datetime.datetime.now() + datetime.timedelta(days=8)
             entity.update(new_entity)
             dsClient.put(entity)
         else:
