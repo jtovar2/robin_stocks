@@ -86,8 +86,7 @@ def handle_mfa_challenge(payload, url, dsClient, pickle_name, mfa_token):
     return objct
 
 def handle_sms_challenge(challenge_id,url , payload, dsClient, pickle_name, sms_code):
-
-    sms_code = input('Enter Robinhood code for validation: ')
+    sms_code = sms_code
     res = respond_to_challenge(challenge_id, sms_code)
     objct = dict()
     objct['success'] = False
