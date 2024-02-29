@@ -80,6 +80,7 @@ def handle_mfa_challenge(payload, url, dsClient, pickle_name, mfa_token):
         new_entity['session'] = zlib.compress(json.dumps(oauth_obj).encode('utf-8'), 9)
         new_entity['user'] = pickle_name
         new_entity['expires_on'] = datetime.datetime.now() + datetime.timedelta(days=8)
+        new_entity['expired'] = False
         entity.update(new_entity)
         dsClient.put(entity)
         objct['success'] = True
@@ -112,6 +113,7 @@ def handle_sms_challenge(challenge_id,url , payload, dsClient, pickle_name, sms_
         new_entity['session'] = zlib.compress(json.dumps(oauth_obj).encode('utf-8'), 9)
         new_entity['user'] = pickle_name
         new_entity['expires_on'] = datetime.datetime.now() + datetime.timedelta(days=8)
+        new_entity['expired'] = False
         entity.update(new_entity)
         dsClient.put(entity)
         objct['success'] = True
@@ -195,6 +197,9 @@ def create_session_on_db(username=None, password=None, expiresIn=691200, scope='
             key = dsClient.key('aaf-crypto-bot-sessions', pickle_name)
             entity = datastore.Entity(key=key)
             new_entity = dict()
+            new_entity['user'] = pickle_name
+            new_entity['expires_on'] = datetime.datetime.now() + datetime.timedelta(days=8)
+            new_entity['expired'] = False
             new_entity['session'] = zlib.compress(json.dumps(oauth_obj).encode('utf-8'), 9)
             entity.update(new_entity)
             dsClient.put(entity)
@@ -257,6 +262,10 @@ def login_fom_db(username=None, password=None, expiresIn=691200, scope='internal
 
     key = dsClient.key('aaf-crypto-bot-sessions', pickle_name)
     entity = dsClient.get(key)
+
+    if entity is not None and 'expired' in entity and entity['expired']:
+        raise Exception('SESSION EXPIRED')
+
     # If authentication has been stored in pickle file then load it. Stops login server from being pinged so much.
     try:
 
@@ -290,6 +299,16 @@ def login_fom_db(username=None, password=None, expiresIn=691200, scope='internal
     if mfa_code:
         payload['mfa_code'] = mfa_code
     else:
+        if entity is not None:
+            new_entity = dict()
+            # iterate through the entity to take over all existing property values
+            for prop in entity:
+                new_entity[prop] = entity[prop]
+
+            new_entity['expired'] = True
+            entity.update(new_entity)
+            dsClient.put(entity)
+
         raise Exception('SESSION EXPIRED')
     data = request_post(url, payload)
     # Handle case where mfa or challenge is required.
