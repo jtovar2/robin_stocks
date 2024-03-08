@@ -10,6 +10,7 @@ from google.cloud import datastore
 
 
 from robin_stocks.robinhood.helper import *
+import robin_stocks.robinhood.crypto as rh_crypto
 from robin_stocks.robinhood.urls import *
 
 def generate_device_token():
@@ -81,6 +82,12 @@ def handle_mfa_challenge(payload, url, dsClient, pickle_name, mfa_token):
         new_entity['user'] = pickle_name
         new_entity['expires_on'] = datetime.datetime.now() + datetime.timedelta(days=8)
         new_entity['expired'] = False
+
+        acct_id = rh_crypto.load_crypto_profile(info="id")
+        new_entity['rh_crypto_set_up'] = False
+        if acct_id is not None:
+            new_entity['rh_crypto_set_up'] = True
+
         entity.update(new_entity)
         dsClient.put(entity)
         objct['success'] = True
