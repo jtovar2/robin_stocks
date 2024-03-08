@@ -5,7 +5,6 @@ import os
 from requests import Session
 
 # Keeps track on if the user is logged in or not.
-LOGGED_IN = False
 logged_in = dict()
 logged_in['logged_in'] = False
 # The session object for making get and post requests.
