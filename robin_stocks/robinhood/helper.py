@@ -3,13 +3,12 @@
 from functools import wraps
 
 import requests
-from robin_stocks.robinhood.globals import LOGGED_IN, OUTPUT, SESSION
+from robin_stocks.robinhood.globals import logged_in, OUTPUT, SESSION
 
 
-def set_login_state(logged_in):
+def set_login_state(logged_in2):
     """Sets the login state"""
-    global LOGGED_IN
-    LOGGED_IN = logged_in
+    logged_in['logged_in'] = logged_in2
 
 def set_output(output):
     """Sets the global output stream"""
@@ -26,8 +25,7 @@ def login_required(func):
        in."""
     @wraps(func)
     def login_wrapper(*args, **kwargs):
-        global LOGGED_IN
-        if not LOGGED_IN:
+        if not logged_in['logged_in']:
             raise Exception('{} can only be called when logged in'.format(
                 func.__name__))
         return(func(*args, **kwargs))
