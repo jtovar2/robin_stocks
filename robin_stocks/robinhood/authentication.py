@@ -121,6 +121,11 @@ def handle_sms_challenge(challenge_id,url , payload, dsClient, pickle_name, sms_
         new_entity['user'] = pickle_name
         new_entity['expires_on'] = datetime.datetime.now() + datetime.timedelta(days=8)
         new_entity['expired'] = False
+
+        acct_id = rh_crypto.load_crypto_profile(info="id")
+        new_entity['rh_crypto_set_up'] = False
+        if acct_id is not None:
+            new_entity['rh_crypto_set_up'] = True
         entity.update(new_entity)
         dsClient.put(entity)
         objct['success'] = True
