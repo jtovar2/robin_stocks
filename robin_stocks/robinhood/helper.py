@@ -1,9 +1,12 @@
 """Contains decorator functions and functions for interacting with global data.
 """
+import time
 from functools import wraps
 
 import requests
 from robin_stocks.robinhood.globals import logged_in, OUTPUT, SESSION
+import random
+wait_times = [0.0, 0.1, 0.3 ,0.2, 0.8]
 
 
 def set_login_state(logged_in2):
@@ -271,6 +274,7 @@ def request_get(url, dataType='regular', payload=None, jsonify_data=True):
     if jsonify_data:
         try:
             res = SESSION.get(url, params=payload)
+            time.sleep(random.choice(wait_times))
             res.raise_for_status()
             data = res.json()
         except (requests.exceptions.HTTPError, AttributeError) as message:
@@ -300,6 +304,7 @@ def request_get(url, dataType='regular', payload=None, jsonify_data=True):
         while nextData['next']:
             try:
                 res = SESSION.get(nextData['next'])
+                time.sleep(random.choice(wait_times))
                 res.raise_for_status()
                 nextData = res.json()
             except:
@@ -368,6 +373,7 @@ def request_delete(url):
     """
     try:
         res = SESSION.delete(url)
+        time.sleep(random.choice(wait_times))
         res.raise_for_status()
         data = res
     except Exception as message:
