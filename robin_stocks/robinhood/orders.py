@@ -149,7 +149,7 @@ def convert_new_crypto_order_into_old_order(new_world_order):
     old_order['state'] = new_world_order['state']
     if old_order['state'] != 'filled':
         if old_order['type'] == 'limit':
-            old_order['price'] = new_world_order['limit_price']
+            old_order['price'] = new_world_order['limit_order_config']['limit_price']
             if 'asset_quantity' in new_world_order['limit_order_config']:
                 old_order['quantity'] = new_world_order['limit_order_config']['asset_quantity']
             else:
