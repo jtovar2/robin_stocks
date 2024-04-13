@@ -162,7 +162,8 @@ def get_crypto_quote(symbol, info=None):
 def get_crypto_quote_from_id_api(publicKeyBase64, privateKeyBase64, api_key, crypto):
     # You can get the current_timestamp with the following code:
     current_timestamp = str(int(time.time()))
-    path = "/api/v1/crypto/trading/orders/?symbol="+ crypto +"-USD"
+    path = "/api/v1/crypto/marketdata/best_bid_ask/?symbol="+ crypto +"-USD"
+
     method = "GET"
     body = ''
     # Convert base64 strings to bytes
@@ -192,7 +193,7 @@ def get_crypto_quote_from_id_api(publicKeyBase64, privateKeyBase64, api_key, cry
     headers['x-api-key'] = api_key
     headers['x-timestamp'] = str(current_timestamp)
 
-    url = "https://trading.robinhood.com/api/v1/crypto/trading/orders/?symbol="+ crypto +"-USD"
+    url = "https://trading.robinhood.com/api/v1/crypto/marketdata/best_bid_ask/?symbol=" + crypto + "-USD"
     x = requests.get(url, headers=headers)
     print(x)
     if not x.ok:
@@ -224,6 +225,8 @@ def get_crypto_quote_from_id(id, info=None):
 
     if logged_in['apiKey']:
         data = get_crypto_quote_from_id_api(logged_in['publicKey'], logged_in['privateKey'], logged_in['apiKey'],id)
+        if data:
+            print(data)
         if len(data['results']) == 0:
             return None
         quote = data['results'][0]
