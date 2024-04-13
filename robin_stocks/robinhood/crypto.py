@@ -1,6 +1,10 @@
 """Contains functions to get information about crypto-currencies."""
 from robin_stocks.robinhood.helper import *
 from robin_stocks.robinhood.urls import *
+import base64
+import ed25519
+
+import requests
 
 @login_required
 def load_crypto_profile(info=None):
@@ -153,6 +157,49 @@ def get_crypto_quote(symbol, info=None):
     return(filter_data(data, info))
 
 
+
+
+def get_crypto_quote_from_id_api(publicKeyBase64, privateKeyBase64, api_key, crypto):
+    # You can get the current_timestamp with the following code:
+    current_timestamp = str(int(time.time()))
+    path = "/api/v1/crypto/trading/orders/?symbol="+ crypto +"-USD"
+    method = "GET"
+    body = ''
+    # Convert base64 strings to bytes
+    private_key_bytes = base64.b64decode(privateKeyBase64)
+    public_key_bytes = base64.b64decode(publicKeyBase64)
+
+    # Create private and public keys from bytes
+    private_key = ed25519.SigningKey(private_key_bytes)
+    public_key = ed25519.VerifyingKey(public_key_bytes)
+
+    # Create the message to sign
+    message = f"{api_key}{current_timestamp}{path}{method}{body}"
+
+    # Sign the message
+    signature = private_key.sign(message.encode("utf-8"))
+
+    base64_signature = base64.b64encode(signature).decode("utf-8")
+
+
+    # Verify the signature
+    result = public_key.verify(signature, message.encode("utf-8"))
+
+
+    headers = dict()
+    headers["Content-Type"] = "application/json; charset=utf-8"
+    headers['x-signature'] = base64_signature
+    headers['x-api-key'] = api_key
+    headers['x-timestamp'] = str(current_timestamp)
+
+    url = "https://trading.robinhood.com/api/v1/crypto/trading/orders/?symbol="+ crypto +"-USD"
+    x = requests.get(url, headers=headers)
+    print(x)
+    if not x.ok:
+        print(x.reason)
+        return None
+    return x.json()
+
 @login_required
 def get_crypto_quote_from_id(id, info=None):
     """Gets information about a crypto including low price, high price, and open price. Uses the id instead of crypto ticker.
@@ -174,6 +221,15 @@ def get_crypto_quote_from_id(id, info=None):
                       * volume
 
     """
+
+    if logged_in['apiKey']:
+        data = get_crypto_quote_from_id_api(logged_in['publicKey'], logged_in['privateKey'], logged_in['apiKey'],id)
+        if len(data['results']) == 0:
+            return None
+        quote = data['results'][0]
+        if info is None:
+            return quote
+        return quote[info]
     url = crypto_quote_url(id)
     data = request_get(url)
     return(filter_data(data, info))

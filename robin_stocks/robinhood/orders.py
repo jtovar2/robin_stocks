@@ -1,4 +1,5 @@
 """Contains all functions for placing orders for stocks, options, and crypto."""
+import decimal
 import uuid
 import json
 import ed25519
@@ -140,7 +141,28 @@ def get_option_order_info(order_id):
     data = request_get(url)
     return data
 
-
+def convert_new_crypto_order_into_old_order(new_world_order):
+    old_order = dict()
+    old_order['id'] = new_world_order['id']
+    old_order['type'] = new_world_order['type']
+    old_order['side'] = new_world_order['side']
+    old_order['state'] = new_world_order['state']
+    if old_order['state'] != 'filled':
+        if old_order['type'] == 'limit':
+            old_order['price'] = new_world_order['limit_price']
+            if 'asset_quantity' in new_world_order['limit_order_config']:
+                old_order['quantity'] = new_world_order['limit_order_config']['asset_quantity']
+            else:
+                old_order['quantity'] = decimal.Decimal(new_world_order['limit_order_config']['quote_amount']) / decimal.Decimal(new_world_order['limit_order_config']['limit_price'])
+                old_order['quantity'] = str(old_order['quantity'])
+        else:
+            old_order['price'] = '0.0'
+            old_order['quantity'] = '0.0'
+    else:
+        old_order['price'] = new_world_order['average_price']
+        old_order['quantity'] = new_world_order['filled_asset_quantity']
+    old_order['currency_code'] = new_world_order['symbol'].replace('-USD', '')
+    return old_order
 @login_required
 def get_crypto_order_info(order_id):
     """Returns the information for a single crypto order.
@@ -151,7 +173,14 @@ def get_crypto_order_info(order_id):
 
     """
     if logged_in['apiKey']:
-        return get_crypto_order(logged_in['publicKey'], logged_in['privateKey'], logged_in['apiKey'],order_id)
+        resp = get_crypto_order(logged_in['publicKey'], logged_in['privateKey'], logged_in['apiKey'],order_id)
+        if len(resp['results']) == 0:
+            return None
+
+        new_world_order =  resp['results'][0]
+        old_order = convert_new_crypto_order_into_old_order(new_world_order)
+        return old_order
+
 
     url = crypto_orders_url(order_id)
     data = request_get(url)
@@ -1475,7 +1504,9 @@ def order_crypto(symbol, side, quantityOrPrice, amountIn="quantity", limitPrice=
 
 
     if logged_in['apiKey']:
-        return order_crypto_api(symbol, side , quantityOrPrice, logged_in['publicKey'], logged_in['privateKey'], logged_in['apiKey'], amountIn, limitPrice, timeInForce, jsonify)
+        new_world_order = order_crypto_api(symbol, side , quantityOrPrice, logged_in['publicKey'], logged_in['privateKey'], logged_in['apiKey'], amountIn, limitPrice, timeInForce, jsonify)
+        old_order = convert_new_crypto_order_into_old_order(new_world_order)
+        return old_order
 
 
     try:
@@ -1559,6 +1590,8 @@ def generate_api_headers(signature, api_key, current_timestamp):
     headers['x-api-key'] = api_key
     headers['x-timestamp'] = str(current_timestamp)
     return headers
+
+
 
 def get_crypto_order(publicKeyBase64, privateKeyBase64, api_key, order_id):
     # You can get the current_timestamp with the following code:
