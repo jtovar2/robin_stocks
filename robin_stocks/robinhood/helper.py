@@ -8,7 +8,12 @@ from robin_stocks.robinhood.globals import logged_in, OUTPUT, SESSION
 import random
 wait_times = [0.0, 0.1, 0.3 ,0.2, 0.8]
 
-
+def set_api_state(logged_in2, publicKey, privateKey, apiKey):
+    """Sets the login state"""
+    logged_in['logged_in'] = logged_in2
+    logged_in['publicKey'] = publicKey
+    logged_in['privateKey'] = privateKey
+    logged_in['apiKey'] = apiKey
 def set_login_state(logged_in2):
     """Sets the login state"""
     logged_in['logged_in'] = logged_in2

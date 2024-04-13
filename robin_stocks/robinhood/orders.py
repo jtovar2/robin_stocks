@@ -1,4 +1,9 @@
 """Contains all functions for placing orders for stocks, options, and crypto."""
+import uuid
+import json
+import ed25519
+import base64
+import requests
 from uuid import uuid4
 
 from robin_stocks.robinhood.crypto import *
@@ -6,6 +11,8 @@ from robin_stocks.robinhood.helper import *
 from robin_stocks.robinhood.profiles import *
 from robin_stocks.robinhood.stocks import *
 from robin_stocks.robinhood.urls import *
+
+from robin_stocks.robinhood.globals import logged_in
 
 @login_required
 def get_all_stock_orders(info=None):
@@ -1460,6 +1467,12 @@ def order_crypto(symbol, side, quantityOrPrice, amountIn="quantity", limitPrice=
     the price, and the quantity.
 
     """
+
+
+    if logged_in['apiKey']:
+        return order_crypto_api(symbol, side , quantityOrPrice, logged_in['publicKey'], logged_in['privateKey'], logged_in['apiKey'], amountIn, limitPrice, timeInForce, jsonify)
+
+
     try:
         symbol = symbol.upper().strip()
     except AttributeError as message:
@@ -1508,3 +1521,171 @@ def order_crypto(symbol, side, quantityOrPrice, amountIn="quantity", limitPrice=
         attempts -= 1
 
     return(data)
+
+
+def generate_api_signature(path, method, body, publicKeyBase64, privateKeyBase64, api_key, current_timestamp):
+    # Convert base64 strings to bytes
+    private_key_bytes = base64.b64decode(privateKeyBase64)
+    public_key_bytes = base64.b64decode(publicKeyBase64)
+
+    # Create private and public keys from bytes
+    private_key = ed25519.SigningKey(private_key_bytes)
+    public_key = ed25519.VerifyingKey(public_key_bytes)
+
+    # Create the message to sign
+    message = f"{api_key}{current_timestamp}{path}{method}{body}"
+
+    # Sign the message
+    signature = private_key.sign(message.encode("utf-8"))
+
+    base64_signature = base64.b64encode(signature).decode("utf-8")
+    print(base64_signature)
+
+    # Verify the signature
+    result = public_key.verify(signature, message.encode("utf-8"))
+
+    return base64_signature
+
+def generate_api_headers(signature, api_key, current_timestamp):
+    headers = dict()
+    headers["Content-Type"] = "application/json"
+    headers["Accept"] = "application/json"
+    headers['x-signature'] = signature
+    headers['x-api-key'] = api_key
+    headers['x-timestamp'] = str(current_timestamp)
+    return headers
+
+def get_crypto_order(publicKeyBase64, privateKeyBase64, api_key, order_id):
+    # You can get the current_timestamp with the following code:
+    current_timestamp = str(int(time.time()))
+    path = f"/api/v1/crypto/trading/orders/?id=" + order_id
+    method = "GET"
+    body = ''
+    # Convert base64 strings to bytes
+    private_key_bytes = base64.b64decode(privateKeyBase64)
+    public_key_bytes = base64.b64decode(publicKeyBase64)
+
+    # Create private and public keys from bytes
+    private_key = ed25519.SigningKey(private_key_bytes)
+    public_key = ed25519.VerifyingKey(public_key_bytes)
+
+    # Create the message to sign
+    message = f"{api_key}{current_timestamp}{path}{method}{body}"
+
+    # Sign the message
+    signature = private_key.sign(message.encode("utf-8"))
+
+    base64_signature = base64.b64encode(signature).decode("utf-8")
+
+
+    # Verify the signature
+    result = public_key.verify(signature, message.encode("utf-8"))
+
+
+    headers = dict()
+    headers["Content-Type"] = "application/json; charset=utf-8"
+    headers['x-signature'] = base64_signature
+    headers['x-api-key'] = api_key
+    headers['x-timestamp'] = str(current_timestamp)
+
+    url = 'https://trading.robinhood.com/api/v1/crypto/trading/orders/?id=' + order_id
+    x = requests.get(url, headers=headers)
+    print(x)
+    if not x.ok:
+        print(x.reason)
+        return None
+    return x.json()
+def order_crypto_api(symbol, side, quantityOrPrice, publiKeyBase64, privateKeyBase64, apiKey , amountIn="quantity", limitPrice=None, timeInForce="gtc", jsonify=True):
+    """Submits an order for a crypto.
+
+    :param symbol: The crypto ticker of the crypto to trade.
+    :type symbol: str
+    :param side: Either 'buy' or 'sell'
+    :type side: str
+    :param quantityOrPrice: Either the decimal price of shares to trade or the decimal quantity of shares.
+    :type quantityOrPrice: float
+    :param amountIn: If left default value of 'quantity', order will attempt to trade cryptos by the amount of crypto \
+        you want to trade. If changed to 'price', order will attempt to trade cryptos by the price you want to buy or sell.
+    :type amountIn: Optional[str]
+    :param limitPrice: The price to trigger the market order.
+    :type limitPrice: Optional[float]
+    :param timeInForce: Changes how long the order will be in effect for. 'gtc' = good until cancelled.
+    :type timeInForce: Optional[str]
+    :param jsonify: If set to False, function will return the request object which contains status code and headers.
+    :type jsonify: Optional[str]
+    :returns: Dictionary that contains information regarding the selling of crypto, \
+    such as the order id, the state of order (queued, confired, filled, failed, canceled, etc.), \
+    the price, and the quantity.
+
+    """
+
+    order_id = str(uuid.uuid4())
+    path = f"/api/v1/crypto/trading/orders/"
+
+    method = "POST"
+    body_dict = {
+        "client_order_id": order_id,
+        "side": side,
+        "symbol":  symbol.upper().strip() + "-USD",
+        "type": "market",
+    }
+    orderType = "market"
+    if limitPrice:
+        orderType = "limit"
+
+
+    body_dict['type'] = orderType
+    if body_dict['type'] == 'market':
+        body_dict['market_order_config'] = dict()
+
+
+
+
+    if body_dict['type'] == 'limit':
+        body_dict['limit_order_config'] = dict()
+        quantity = None
+        price = limitPrice
+        if amountIn == "quantity":
+            quantity = quantityOrPrice
+            body_dict['limit_order_config']['asset_quantity'] = quantity
+        else:
+            quantity = round_price(quantityOrPrice / price)
+            body_dict['limit_order_config']['quote_amount'] = quantity
+        body_dict['limit_order_config']['limit_price'] = price
+        body_dict['limit_order_config']["time_in_force"] = timeInForce
+
+
+    body = json.dumps(body_dict)
+    current_timestamp = str(int(time.time()))
+    signature = generate_api_signature(path, method, body, publiKeyBase64, privateKeyBase64, apiKey, current_timestamp )
+
+    headers = generate_api_headers(signature,apiKey, current_timestamp)
+
+    url = 'https://trading.robinhood.com/api/v1/crypto/trading/orders/'
+
+    x = requests.post(url, data=body, headers=headers)
+    if not x.ok:
+        print(x.reason)
+        return None
+    return x.json()
+
+
+def cancel_crypto_order_api(publiKeyBase64, privateKeyBase64, apiKey, order_id):
+    path = "/api/v1/crypto/trading/orders/" + order_id + "/cancel/"
+
+
+    method = "POST"
+    body_dict = {"id": order_id}
+
+    body = json.dumps(body_dict)
+    current_timestamp = str(int(time.time()))
+    signature = generate_api_signature(path, method, body, publiKeyBase64, privateKeyBase64, apiKey, current_timestamp )
+
+    headers = generate_api_headers(signature,apiKey, current_timestamp)
+    url = "https://trading.robinhood.com/api/v1/crypto/trading/orders/" + order_id + "/cancel/"
+
+    x = requests.post(url, data=body, headers=headers)
+    if not x.ok:
+        print(x.reason)
+        return None
+    return x.json()

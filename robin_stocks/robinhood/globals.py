@@ -7,6 +7,11 @@ from requests import Session
 # Keeps track on if the user is logged in or not.
 logged_in = dict()
 logged_in['logged_in'] = False
+logged_in['publicKey'] = None
+logged_in['privateKey'] = None
+logged_in['apiKey'] = None
+
+
 # The session object for making get and post requests.
 SESSION = Session()
 SESSION.headers = {

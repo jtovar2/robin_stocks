@@ -131,7 +131,8 @@ def handle_sms_challenge(challenge_id,url , payload, dsClient, pickle_name, sms_
         objct['success'] = True
     return  objct
 
-
+def crypto_api_login(publicKey, privateKey, apiKey):
+    set_api_state(True, publicKey, privateKey, apiKey)
 
 def create_session_on_db(username=None, password=None, expiresIn=691200, scope='internal', by_sms=True, dsClient=None, mfa_code=None, pickle_name=None):
     """This function will effectively log the user into robinhood by getting an
@@ -500,5 +501,5 @@ def logout():
     :returns: None
 
     """
-    set_login_state(False)
     update_session('Authorization', None)
+    set_api_state(False,None,None, None)
