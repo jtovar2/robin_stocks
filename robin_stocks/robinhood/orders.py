@@ -150,6 +150,9 @@ def get_crypto_order_info(order_id):
     :returns: Returns a list of dictionaries of key/value pairs for the order.
 
     """
+    if logged_in['apiKey']:
+        return get_crypto_order(logged_in['publicKey'], logged_in['privateKey'], logged_in['apiKey'],order_id)
+
     url = crypto_orders_url(order_id)
     data = request_get(url)
     return data
@@ -239,7 +242,9 @@ def cancel_crypto_order(orderID):
     :type orderID: str
     :returns: Returns the order information for the order that was cancelled.
 
-    """ 
+    """
+    if logged_in['apiKey']:
+        return cancel_crypto_order_api(logged_in['publicKey'], logged_in['privateKey'], logged_in['apiKey'], orderID)
     url = crypto_cancel_url(orderID)
     data = request_post(url)
 
