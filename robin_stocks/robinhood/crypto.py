@@ -229,6 +229,9 @@ def get_crypto_quote_from_id(id, info=None):
         quote = data['results'][0]
         if info is None:
             return quote
+        print("quote this")
+        print(quote)
+        print("^^^^^")
         return quote[info]
     url = crypto_quote_url(id)
     data = request_get(url)
