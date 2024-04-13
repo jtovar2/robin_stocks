@@ -1687,7 +1687,7 @@ def order_crypto_api(symbol, side, quantityOrPrice, publiKeyBase64, privateKeyBa
             quantity = quantityOrPrice
             body_dict['limit_order_config']['asset_quantity'] = quantity
         else:
-            quantity = round_price(quantityOrPrice / price)
+            quantity =round_price(quantityOrPrice)
             body_dict['limit_order_config']['quote_amount'] = quantity
         body_dict['limit_order_config']['limit_price'] = price
         body_dict['limit_order_config']["time_in_force"] = timeInForce
