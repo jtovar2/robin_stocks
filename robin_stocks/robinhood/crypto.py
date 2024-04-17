@@ -171,6 +171,7 @@ def get_crypto_quotes_from_ids_api( cryptos):
             path = path + "?symbol="+ crypto +"-USD"
         else:
             path = path + "&symbol=" + crypto + "-USD"
+        index = index + 1
     method = "GET"
     body = ''
     # Convert base64 strings to bytes
