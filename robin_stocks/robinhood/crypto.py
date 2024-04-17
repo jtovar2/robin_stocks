@@ -158,6 +158,61 @@ def get_crypto_quote(symbol, info=None):
 
 
 
+@login_required
+def get_crypto_quotes_from_ids_api( cryptos):
+    # You can get the current_timestamp with the following code:
+    current_timestamp = str(int(time.time()))
+    ###?symbol=BTC-USD&symbol=ETH-USD
+    path = "/api/v1/crypto/marketdata/best_bid_ask/"
+    #?symbol="+ crypto +"-USD"
+    index = 0
+    for crypto in cryptos:
+        if index == 0:
+            path = path + "?symbol="+ crypto +"-USD"
+        else:
+            path = path + "&symbol=" + crypto + "-USD"
+    method = "GET"
+    body = ''
+    # Convert base64 strings to bytes
+    publicKeyBase64 =  logged_in['publicKey']
+    privateKeyBase64 = logged_in['privateKey']
+    api_key = logged_in['apiKey']
+
+
+    private_key_bytes = base64.b64decode(privateKeyBase64)
+    public_key_bytes = base64.b64decode(publicKeyBase64)
+
+    # Create private and public keys from bytes
+    private_key = ed25519.SigningKey(private_key_bytes)
+    public_key = ed25519.VerifyingKey(public_key_bytes)
+
+    # Create the message to sign
+    message = f"{api_key}{current_timestamp}{path}{method}{body}"
+
+    # Sign the message
+    signature = private_key.sign(message.encode("utf-8"))
+
+    base64_signature = base64.b64encode(signature).decode("utf-8")
+
+
+    # Verify the signature
+    result = public_key.verify(signature, message.encode("utf-8"))
+
+
+    headers = dict()
+    headers["Content-Type"] = "application/json; charset=utf-8"
+    headers['x-signature'] = base64_signature
+    headers['x-api-key'] = api_key
+    headers['x-timestamp'] = str(current_timestamp)
+
+    url = "https://trading.robinhood.com" + path
+    x = requests.get(url, headers=headers)
+    if not x.ok:
+        print(x.reason)
+        return None
+    return x.json()
+
+
 
 def get_crypto_quote_from_id_api(publicKeyBase64, privateKeyBase64, api_key, crypto):
     # You can get the current_timestamp with the following code:
