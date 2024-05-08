@@ -18,7 +18,7 @@ from .account import (build_holdings, build_user_profile,
 from .authentication import login, logout, create_session_on_db, login_fom_db, handle_mfa_challenge, handle_sms_challenge, crypto_api_login
 from .crypto import (get_crypto_currency_pairs, get_crypto_historicals,
                      get_crypto_info, get_crypto_positions, get_crypto_quote,
-                     get_crypto_quote_from_id, load_crypto_profile, get_crypto_quotes_from_ids_api, get_all_crypto_quotes)
+                     get_crypto_quote_from_id, load_crypto_profile, get_crypto_quotes_from_ids_api)
 from .export import (export_completed_crypto_orders,
                      export_completed_option_orders,
                      export_completed_stock_orders)
