@@ -1781,7 +1781,3 @@ def cancel_crypto_order_api(publiKeyBase64, privateKeyBase64, apiKey, order_id):
         print(x.reason)
         return None
     return x.json()
-
-
-resp = get_crypto_order_between_dates('doPTdvpgnJO60VnwXbq+B5CKpJvNgQf0O4SHArw/xzU=', 'iSSZotHwccUguaYYPcCvyEOZMlgDqhs6Al42rO1QFX52g9N2+mCck7rRWfBdur4HkIqkm82BB/Q7hIcCvD/HNQ==', 'eab28df8-dfaa-4fab-8f2e-6a990f1fad7d', None,None)
-print(resp)
