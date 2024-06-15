@@ -1631,6 +1631,48 @@ def get_crypto_order(publicKeyBase64, privateKeyBase64, api_key, order_id):
         print(x.reason)
         return None
     return x.json()
+
+def get_crypto_order_between_dates(publicKeyBase64, privateKeyBase64, api_key, start_time, end_time):
+    # You can get the current_timestamp with the following code:
+    current_timestamp = str(int(time.time()))
+    path = f"/api/v1/crypto/trading/orders/?created_at_start=2024-06-15T00:06:50Z&created_at_end=2024-06-15T04:08:50Z"
+    method = "GET"
+    body = ''
+    # Convert base64 strings to bytes
+    private_key_bytes = base64.b64decode(privateKeyBase64)
+    public_key_bytes = base64.b64decode(publicKeyBase64)
+
+    # Create private and public keys from bytes
+    private_key = ed25519.SigningKey(private_key_bytes)
+    public_key = ed25519.VerifyingKey(public_key_bytes)
+
+    # Create the message to sign
+    message = f"{api_key}{current_timestamp}{path}{method}{body}"
+
+    # Sign the message
+    signature = private_key.sign(message.encode("utf-8"))
+
+    base64_signature = base64.b64encode(signature).decode("utf-8")
+
+
+    # Verify the signature
+    result = public_key.verify(signature, message.encode("utf-8"))
+
+
+    headers = dict()
+    headers["Content-Type"] = "application/json; charset=utf-8"
+    headers['x-signature'] = base64_signature
+    headers['x-api-key'] = api_key
+    headers['x-timestamp'] = str(current_timestamp)
+
+    url = "https://trading.robinhood.com/api/v1/crypto/trading/orders/?created_at_start=2024-06-15T00:06:50Z&created_at_end=2024-06-15T04:08:50Z"
+    x = requests.get(url, headers=headers)
+    print(x)
+    if not x.ok:
+        print(x.reason)
+        return None
+    return x.json()
+
 def order_crypto_api(symbol, side, quantityOrPrice, publiKeyBase64, privateKeyBase64, apiKey , amountIn="quantity", limitPrice=None, timeInForce="gtc", jsonify=True):
     """Submits an order for a crypto.
 
@@ -1685,7 +1727,10 @@ def order_crypto_api(symbol, side, quantityOrPrice, publiKeyBase64, privateKeyBa
         else:
             price = round_price(get_crypto_quote_from_id(symbol, info=priceType))
             quantity = round_price(quantityOrPrice / price)
-            body_dict['market_order_config']['asset_quantity'] = quantity
+            if symbol in ['SHIB']:
+                body_dict['market_order_config']['asset_quantity'] = int(quantity)
+            else:
+                body_dict['market_order_config']['asset_quantity'] = quantity
 
 
     if body_dict['type'] == 'limit':
@@ -1736,3 +1781,7 @@ def cancel_crypto_order_api(publiKeyBase64, privateKeyBase64, apiKey, order_id):
         print(x.reason)
         return None
     return x.json()
+
+
+resp = get_crypto_order_between_dates('doPTdvpgnJO60VnwXbq+B5CKpJvNgQf0O4SHArw/xzU=', 'iSSZotHwccUguaYYPcCvyEOZMlgDqhs6Al42rO1QFX52g9N2+mCck7rRWfBdur4HkIqkm82BB/Q7hIcCvD/HNQ==', 'eab28df8-dfaa-4fab-8f2e-6a990f1fad7d', None,None)
+print(resp)
