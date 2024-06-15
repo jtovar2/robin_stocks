@@ -278,7 +278,7 @@ def get_crypto_quote_from_id(id, info=None):
 
     """
 
-    if logged_in['apiKey']:
+    if 'apiKey'in logged_in and logged_in['apiKey']:
         data = get_crypto_quote_from_id_api(logged_in['publicKey'], logged_in['privateKey'], logged_in['apiKey'],id)
         if data:
             print(data)

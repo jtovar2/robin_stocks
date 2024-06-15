@@ -3,9 +3,9 @@ import decimal
 import uuid
 import json
 import ed25519
-import base64
 import requests
 from uuid import uuid4
+import base64
 
 from robin_stocks.robinhood.crypto import *
 from robin_stocks.robinhood.helper import *
@@ -172,7 +172,7 @@ def get_crypto_order_info(order_id):
     :returns: Returns a list of dictionaries of key/value pairs for the order.
 
     """
-    if logged_in['apiKey']:
+    if 'apiKey' in logged_in and logged_in['apiKey']:
         resp = get_crypto_order(logged_in['publicKey'], logged_in['privateKey'], logged_in['apiKey'],order_id)
         if len(resp['results']) == 0:
             return None
@@ -272,7 +272,7 @@ def cancel_crypto_order(orderID):
     :returns: Returns the order information for the order that was cancelled.
 
     """
-    if logged_in['apiKey']:
+    if 'apiKey' in logged_in and logged_in['apiKey']:
         return cancel_crypto_order_api(logged_in['publicKey'], logged_in['privateKey'], logged_in['apiKey'], orderID)
     url = crypto_cancel_url(orderID)
     data = request_post(url)
@@ -1502,8 +1502,7 @@ def order_crypto(symbol, side, quantityOrPrice, amountIn="quantity", limitPrice=
 
     """
 
-
-    if logged_in['apiKey']:
+    if 'apiKey' in logged_in and logged_in['apiKey']:
         new_world_order = order_crypto_api(symbol, side , quantityOrPrice, logged_in['publicKey'], logged_in['privateKey'], logged_in['apiKey'], amountIn, limitPrice, timeInForce, jsonify)
         old_order = convert_new_crypto_order_into_old_order(new_world_order)
         return old_order
@@ -1590,7 +1589,6 @@ def generate_api_headers(signature, api_key, current_timestamp):
     headers['x-api-key'] = api_key
     headers['x-timestamp'] = str(current_timestamp)
     return headers
-
 
 
 def get_crypto_order(publicKeyBase64, privateKeyBase64, api_key, order_id):
