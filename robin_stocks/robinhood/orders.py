@@ -1672,9 +1672,20 @@ def order_crypto_api(symbol, side, quantityOrPrice, publiKeyBase64, privateKeyBa
 
     body_dict['type'] = orderType
     if body_dict['type'] == 'market':
+        if side == "buy":
+            priceType = "ask_inclusive_of_buy_spread"
+        else:
+            priceType = "bid_inclusive_of_sell_spread"
+
+
         body_dict['market_order_config'] = dict()
-
-
+        if amountIn == "quantity":
+            quantity = quantityOrPrice
+            body_dict['market_order_config']['asset_quantity'] = quantity
+        else:
+            price = round_price(get_crypto_quote_from_id(symbol, info=priceType))
+            quantity = round_price(quantityOrPrice / price)
+            body_dict['market_order_config']['asset_quantity'] = quantity
 
 
     if body_dict['type'] == 'limit':
