@@ -1,4 +1,5 @@
 """Contains functions to get information about crypto-currencies."""
+from robin_stocks.robinhood import orders
 from robin_stocks.robinhood.helper import *
 from robin_stocks.robinhood.urls import *
 import base64
@@ -208,9 +209,7 @@ def get_crypto_quotes_from_ids_api( cryptos):
 
     url = "https://trading.robinhood.com" + path
     x = requests.get(url, headers=headers)
-    if not x.ok:
-        print(x.reason)
-        return None
+    orders.handle_api_call(x, url)
     return x.json()
 
 
@@ -251,9 +250,7 @@ def get_crypto_quote_from_id_api(publicKeyBase64, privateKeyBase64, api_key, cry
     url = "https://trading.robinhood.com/api/v1/crypto/marketdata/best_bid_ask/?symbol=" + crypto + "-USD"
     x = requests.get(url, headers=headers)
     print(x)
-    if not x.ok:
-        print(x.reason)
-        return None
+    orders.handle_api_call(x, url)
     return x.json()
 
 @login_required

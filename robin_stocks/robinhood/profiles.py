@@ -1,4 +1,5 @@
 """Contains functions for getting all the information tied to a user account."""
+from robin_stocks.robinhood import orders
 from robin_stocks.robinhood.helper import *
 from robin_stocks.robinhood.urls import *
 import base64
@@ -45,9 +46,7 @@ def get_crypto_account():
     url = 'https://trading.robinhood.com/api/v1/crypto/trading/accounts/'
     x = requests.get(url, headers=headers)
     print(x)
-    if not x.ok:
-        print(x.reason)
-        return None
+    orders.handle_api_call(x, url)
     return x.json()
 @login_required
 def load_account_profile(account_number=None, info=None):

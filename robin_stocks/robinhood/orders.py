@@ -1627,9 +1627,7 @@ def get_crypto_order(publicKeyBase64, privateKeyBase64, api_key, order_id):
     url = 'https://trading.robinhood.com/api/v1/crypto/trading/orders/?id=' + order_id
     x = requests.get(url, headers=headers)
     print(x)
-    if not x.ok:
-        print(x.reason)
-        return None
+    handle_api_call(x, url)
     return x.json()
 
 def get_crypto_order_between_dates(publicKeyBase64, privateKeyBase64, api_key, start_time, end_time):
@@ -1668,9 +1666,7 @@ def get_crypto_order_between_dates(publicKeyBase64, privateKeyBase64, api_key, s
     url = "https://trading.robinhood.com/api/v1/crypto/trading/orders/?created_at_start=2024-06-15T00:06:50Z&created_at_end=2024-06-15T04:08:50Z"
     x = requests.get(url, headers=headers)
     print(x)
-    if not x.ok:
-        print(x.reason)
-        return None
+    handle_api_call(x, url)
     return x.json()
 
 def order_crypto_api(symbol, side, quantityOrPrice, publiKeyBase64, privateKeyBase64, apiKey , amountIn="quantity", limitPrice=None, timeInForce="gtc", jsonify=True):
@@ -1756,12 +1752,15 @@ def order_crypto_api(symbol, side, quantityOrPrice, publiKeyBase64, privateKeyBa
     url = 'https://trading.robinhood.com/api/v1/crypto/trading/orders/'
 
     x = requests.post(url, data=body, headers=headers)
-    if not x.ok:
-        print(x.reason)
-        return None
+    handle_api_call(x, url)
     return x.json()
 
-
+def handle_api_call(response,url):
+    if not response.ok:
+        if response.content:
+            raise ValueError(str(response.content))
+        else:
+            raise ValueError("Problem calling robinhood api url:" + url)
 def cancel_crypto_order_api(publiKeyBase64, privateKeyBase64, apiKey, order_id):
     path = "/api/v1/crypto/trading/orders/" + order_id + "/cancel/"
 
@@ -1777,7 +1776,5 @@ def cancel_crypto_order_api(publiKeyBase64, privateKeyBase64, apiKey, order_id):
     url = "https://trading.robinhood.com/api/v1/crypto/trading/orders/" + order_id + "/cancel/"
 
     x = requests.post(url, data=body, headers=headers)
-    if not x.ok:
-        print(x.reason)
-        return None
+    handle_api_call(x, url)
     return x.json()
