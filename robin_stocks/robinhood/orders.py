@@ -855,7 +855,7 @@ def order(symbol, quantity, side, limitPrice=None, stopPrice=None, account_numbe
     trigger = "immediate"
 
     if side == "buy":
-        priceType = "ask_price"
+        priceType = "bid_price"
     else:
         priceType = "bid_price"
 
