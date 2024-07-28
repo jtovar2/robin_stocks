@@ -15,6 +15,8 @@ from robin_stocks.robinhood.urls import *
 
 from robin_stocks.robinhood.globals import logged_in
 
+import robin_stocks.robinhood.profiles as profiles
+
 @login_required
 def get_all_stock_orders(info=None):
     """Returns a list of all the orders that have been processed for the account.
@@ -875,7 +877,7 @@ def order(symbol, quantity, side, limitPrice=None, stopPrice=None, account_numbe
     else:
         price = round_price(next(iter(get_latest_price(symbol, priceType, extendedHours)), 0.00))
     payload = {
-        'account': load_account_profile(account_number=account_number, info='url'),
+        'account': profiles.load_account_profile(account_number=account_number, info='url'),
         'instrument': get_instruments_by_symbols(symbol, info='url')[0],
         'symbol': symbol,
         'price': price,
@@ -1025,7 +1027,7 @@ def order_option_spread(direction, price, symbol, quantity, spread, account_numb
                      'option': option_instruments_url(optionID)})
 
     payload = {
-        'account': load_account_profile(account_number=account_number, info='url'),
+        'account': profiles.load_account_profile(account_number=account_number, info='url'),
         'direction': direction,
         'time_in_force': timeInForce,
         'legs': legs,
@@ -1085,7 +1087,7 @@ def order_buy_option_limit(positionEffect, creditOrDebit, price, symbol, quantit
     optionID = id_for_option(symbol, expirationDate, strike, optionType)
 
     payload = {
-        'account': load_account_profile(account_number=account_number, info='url'),
+        'account': profiles.load_account_profile(account_number=account_number, info='url'),
         'direction': creditOrDebit,
         'time_in_force': timeInForce,
         'legs': [
@@ -1150,7 +1152,7 @@ def order_buy_option_stop_limit(positionEffect, creditOrDebit, limitPrice, stopP
     optionID = id_for_option(symbol, expirationDate, strike, optionType)
 
     payload = {
-        'account': load_account_profile(account_number=account_number, info='url'),
+        'account': profiles.load_account_profile(account_number=account_number, info='url'),
         'direction': creditOrDebit,
         'time_in_force': timeInForce,
         'legs': [
@@ -1215,7 +1217,7 @@ def order_sell_option_stop_limit(positionEffect, creditOrDebit, limitPrice, stop
     optionID = id_for_option(symbol, expirationDate, strike, optionType)
 
     payload = {
-        'account': load_account_profile(account_number=account_number, info='url'),
+        'account': profiles.load_account_profile(account_number=account_number, info='url'),
         'direction': creditOrDebit,
         'time_in_force': timeInForce,
         'legs': [
@@ -1279,7 +1281,7 @@ def order_sell_option_limit(positionEffect, creditOrDebit, price, symbol, quanti
     optionID = id_for_option(symbol, expirationDate, strike, optionType)
 
     payload = {
-        'account': load_account_profile(account_number=account_number, info='url'),
+        'account': profiles.load_account_profile(account_number=account_number, info='url'),
         'direction': creditOrDebit,
         'time_in_force': timeInForce,
         'legs': [

@@ -66,7 +66,7 @@ from .orders import (cancel_all_crypto_orders, cancel_all_option_orders,
                      order_sell_stop_loss, order_sell_trailing_stop)
 from .profiles import (load_account_profile, load_basic_profile,
                        load_investment_profile, load_portfolio_profile,
-                       load_security_profile, load_user_profile, get_crypto_account)
+                       load_security_profile, load_user_profile, get_crypto_account, )
 from .stocks import (find_instrument_data, get_earnings, get_events,
                      get_fundamentals, get_instrument_by_url,
                      get_instruments_by_symbols, get_latest_price,
