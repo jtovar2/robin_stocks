@@ -16,6 +16,7 @@ from robin_stocks.robinhood.urls import *
 from robin_stocks.robinhood.globals import logged_in
 
 import robin_stocks.robinhood.profiles as profiles
+from datetime import datetime
 
 @login_required
 def get_all_stock_orders(info=None):
@@ -818,7 +819,8 @@ def order_trailing_stop(symbol, quantity, side, trailAmount, trailType='percenta
 
 
 @login_required
-def order(symbol, quantity, side, limitPrice=None, stopPrice=None, account_number=None, timeInForce='gtc', extendedHours=False, jsonify=True, market_hours='regular_hours'):
+def order(symbol, quantity, side, limitPrice=None, stopPrice=None, account_number=None, timeInForce='gtc',
+          extendedHours=False, jsonify=True, market_hours='regular_hours'):
     """A generic order function.
 
     :param symbol: The stock ticker of the stock to sell.
@@ -844,7 +846,7 @@ def order(symbol, quantity, side, limitPrice=None, stopPrice=None, account_numbe
     such as the order id, the state of order (queued, confired, filled, failed, canceled, etc.), \
     the price, and the quantity.
 
-    """ 
+    """
     try:
         symbol = symbol.upper().strip()
     except AttributeError as message:
@@ -855,7 +857,7 @@ def order(symbol, quantity, side, limitPrice=None, stopPrice=None, account_numbe
     trigger = "immediate"
 
     if side == "buy":
-        priceType = "bid_price"
+        priceType = "ask_price"
     else:
         priceType = "bid_price"
 
@@ -876,11 +878,16 @@ def order(symbol, quantity, side, limitPrice=None, stopPrice=None, account_numbe
         trigger = "stop"
     else:
         price = round_price(next(iter(get_latest_price(symbol, priceType, extendedHours)), 0.00))
+
+
     payload = {
         'account': profiles.load_account_profile(account_number=account_number, info='url'),
         'instrument': get_instruments_by_symbols(symbol, info='url')[0],
         'symbol': symbol,
         'price': price,
+        'ask_price': round_price(next(iter(get_latest_price(symbol, "ask_price", extendedHours)), 0.00)),
+        'bid_ask_timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'),
+        'bid_price': round_price(next(iter(get_latest_price(symbol, "bid_price", extendedHours)), 0.00)),
         'quantity': quantity,
         'ref_id': str(uuid4()),
         'type': orderType,
@@ -888,32 +895,33 @@ def order(symbol, quantity, side, limitPrice=None, stopPrice=None, account_numbe
         'time_in_force': timeInForce,
         'trigger': trigger,
         'side': side,
-        'market_hours': market_hours, # choices are ['regular_hours', 'all_day_hours']
+        'market_hours': market_hours,  # choices are ['regular_hours', 'all_day_hours']
         'extended_hours': extendedHours,
         'order_form_version': 4
     }
     # adjust market orders
     if orderType == 'market':
         del payload['stop_price']
-        del payload['extended_hours'] 
-        
-    if market_hours == 'regular_hours':
-        if side == "buy" and orderType != 'market':
-            payload['preset_percent_limit'] = "0.05"
-            payload['type'] = 'limit' 
-        # regular market sell
-        elif orderType == 'market':
-            del payload['price']   
-    elif market_hours == 'all_day_hours': 
-        payload['type'] = 'limit' 
-        payload['quantity']=int(payload['quantity']) # round to integer instead of fractional
-        
-    url = orders_url()
+        # if market_hours == 'regular_hours':
+        #     del payload['extended_hours']
 
+    if market_hours == 'regular_hours':
+        if side == "buy":
+            payload['preset_percent_limit'] = "0.05"
+            payload['type'] = 'limit'
+            # regular market sell
+        elif orderType == 'market' and side == 'sell':
+            del payload['price']
+    elif market_hours == 'all_day_hours':
+
+        payload['type'] = 'limit'
+        payload['quantity'] = int(payload['quantity'])  # round to integer instead of fractional
+
+    url = orders_url()
+    # print(payload)
     data = request_post(url, payload, jsonify_data=jsonify)
 
-    return(data)
-
+    return (data)
 
 @login_required
 def order_option_credit_spread(price, symbol, quantity, spread, timeInForce='gtc', account_number=None, jsonify=True):
