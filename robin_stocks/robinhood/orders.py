@@ -898,11 +898,11 @@ def order(symbol, quantity, side, limitPrice=None, stopPrice=None, account_numbe
         del payload['extended_hours'] 
         
     if market_hours == 'regular_hours':
-        if side == "buy":
+        if side == "buy" and orderType != 'market':
             payload['preset_percent_limit'] = "0.05"
             payload['type'] = 'limit' 
         # regular market sell
-        elif orderType == 'market' and side == 'sell':
+        elif orderType == 'market':
             del payload['price']   
     elif market_hours == 'all_day_hours': 
         payload['type'] = 'limit' 
