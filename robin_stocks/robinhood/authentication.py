@@ -191,6 +191,10 @@ def create_session_on_db(username=None, password=None, expiresIn=691200, scope='
         if 'mfa_required' in data:
             resp_obj = {'verification_type': 'mfa_required', 'payload' : payload, 'url': url}
             return resp_obj
+        elif 'verification_workflow' in data:
+            challenge_id = data['verification_workflowÏ']['id']
+            resp_obj = {'verification_type': 'challenge', 'challenge_id': challenge_id, 'payload': payload, 'url': url}
+            return resp_obj
 
         elif 'challenge' in data:
             challenge_id = data['challenge']['id']
