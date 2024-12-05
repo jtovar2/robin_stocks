@@ -15,7 +15,7 @@ from .account import (build_holdings, build_user_profile,
                       get_wire_transfers, load_phoenix_account,
                       post_symbols_to_watchlist, unlink_bank_account,
                       withdrawl_funds_to_bank_account)
-from .authentication import login, logout, create_session_on_db, login_fom_db, handle_mfa_challenge, handle_sms_challenge, crypto_api_login
+from .authentication import login, logout, create_session_on_db, login_fom_db, handle_mfa_challenge, handle_sms_challenge, crypto_api_login, handle_verification_challenge
 from .crypto import (get_crypto_currency_pairs, get_crypto_historicals,
                      get_crypto_info, get_crypto_positions, get_crypto_quote,
                      get_crypto_quote_from_id, load_crypto_profile, get_crypto_quotes_from_ids_api)
