@@ -38,7 +38,32 @@ def generate_device_token():
 
     return(id)
 
+def pathfind_user_machine(device_id, workflow_id):
+    """This function will post to the challenge url.
 
+    :param challenge_id: The challenge id.
+    :type challenge_id: str
+    :param sms_code: The sms code.
+    :type sms_code: str
+    :returns:  The response from requests.
+
+    """
+    url = 'https://api.robinhood.com/pathfinder/user_machine/'
+    payload = {"device_id":device_id,"flow":"suv","input":{"workflow_id":workflow_id}}
+    return(request_post(url, payload))
+
+def pathfind_user_view(user_id):
+    """This function will post to the challenge url.
+
+    :param challenge_id: The challenge id.
+    :type challenge_id: str
+    :param sms_code: The sms code.
+    :type sms_code: str
+    :returns:  The response from requests.
+
+    """
+    url = f'https://api.robinhood.com/pathfinder/inquiries/{user_id}/user_view/'
+    return(request_get(url))
 def respond_to_challenge(challenge_id, sms_code):
     """This function will post to the challenge url.
 
@@ -92,6 +117,44 @@ def handle_mfa_challenge(payload, url, dsClient, pickle_name, mfa_token):
         dsClient.put(entity)
         objct['success'] = True
     return objct
+
+
+def handle_verification_challenge(challenge_id, url, payload, dsClient, pickle_name, sms_code):
+    resp = pathfind_user_machine(payload['device_id'], challenge_id)
+
+    user_view = pathfind_user_view(resp['id'])
+
+    res = respond_to_challenge(user_view['context']['sheriff_challenge']['id'], sms_code)
+    print(res)
+    data = request_post(url, payload)
+    objct = dict()
+    objct['success'] = False
+    if 'access_token' in data:
+        token = '{0} {1}'.format(data['token_type'], data['access_token'])
+        update_session('Authorization', token)
+        set_login_state(True)
+        data['detail'] = "logged in with brand new authentication code."
+
+        oauth_obj = {'token_type': data['token_type'],
+                     'access_token': data['access_token'],
+                     'refresh_token': data['refresh_token'],
+                     'device_token': payload['device_token']}
+        key = dsClient.key('aaf-crypto-bot-sessions', pickle_name)
+        entity = datastore.Entity(key=key)
+        new_entity = dict()
+        new_entity['session'] = zlib.compress(json.dumps(oauth_obj).encode('utf-8'), 9)
+        new_entity['user'] = pickle_name
+        new_entity['expires_on'] = datetime.datetime.now() + datetime.timedelta(days=8)
+        new_entity['expired'] = False
+
+        acct_id = rh_crypto.load_crypto_profile(info="id")
+        new_entity['rh_crypto_set_up'] = False
+        if acct_id is not None:
+            new_entity['rh_crypto_set_up'] = True
+        entity.update(new_entity)
+        dsClient.put(entity)
+        objct['success'] = True
+    return  objct
 
 def handle_sms_challenge(challenge_id,url , payload, dsClient, pickle_name, sms_code):
     sms_code = sms_code
