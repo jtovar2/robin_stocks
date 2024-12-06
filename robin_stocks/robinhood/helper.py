@@ -276,14 +276,6 @@ def request_get(url, dataType='regular', payload=None, jsonify_data=True):
     else:
         data = None
     res = None
-    update_session('User-Agent',
-                   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Safari/605.1.15')
-    update_session('Host', 'api.robinhood.com')
-    update_session( 'Origin', 'https://robinhood.com')
-    update_session( 'Referer', 'https://robinhood.com/')
-    update_session( 'Sec-Fetch-Dest', 'empty')
-    update_session( 'Sec-Fetch-Mode', 'cors')
-    update_session( 'Sec-Fetch-Site', 'same-site')
     if jsonify_data:
         try:
             res = SESSION.get(url, params=payload)
@@ -363,7 +355,6 @@ def request_post(url, payload=None, timeout=16, json=False, jsonify_data=True):
             res = SESSION.post(url, json=payload, timeout=timeout)
             update_session(
                 'Content-Type', 'application/x-www-form-urlencoded; charset=utf-8')
-            update_session('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Safari/605.1.15')
         else:
             res = SESSION.post(url, data=payload, timeout=timeout)
         if res.status_code not in [200, 201, 202, 204, 301, 302, 303, 304, 307, 400, 401, 402, 403]:

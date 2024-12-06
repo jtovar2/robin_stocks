@@ -5,6 +5,7 @@ import json
 import os
 import pickle
 import random
+import uuid
 import zlib
 from google.cloud import datastore
 
@@ -337,7 +338,10 @@ def login_fom_db(username=None, password=None, expiresIn=691200, scope='internal
         'scope': scope,
         'username': username,
         'challenge_type': challenge_type,
-        'device_token': device_token
+        'device_token': device_token,
+        "token_request_path": "/login",
+        "create_read_only_secondary_token": False,
+        "request_id" : str( uuid.uuid4())
     }
 
     key = dsClient.key('aaf-crypto-bot-sessions', pickle_name)

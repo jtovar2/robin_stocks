@@ -17,11 +17,11 @@ SESSION = Session()
 SESSION.headers = {
     "Accept": "*/*",
     "Accept-Encoding": "gzip,deflate,br",
-    "Accept-Language": "en-US,en;q=1",
+    "Accept-Language": "en-US,en;q=0.9",
     "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
-    "X-Robinhood-API-Version": "1.315.0",
+    "X-Robinhood-API-Version": "1.431.4",
     "Connection": "keep-alive",
-    "User-Agent": "*"
+    'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Safari/605.1.15'
 }
 
 #All print() statement direct their output to this stream
