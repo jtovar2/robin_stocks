@@ -50,7 +50,7 @@ def pathfind_user_machine(device_id, workflow_id):
     """
     url = 'https://api.robinhood.com/pathfinder/user_machine/'
     payload = {"device_id":device_id,"flow":"suv","input":{"workflow_id":workflow_id}}
-    return(request_post(url, payload))
+    return(request_post(url, payload,json=True))
 
 def pathfind_user_view(user_id):
     """This function will post to the challenge url.
