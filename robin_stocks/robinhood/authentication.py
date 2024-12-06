@@ -120,11 +120,12 @@ def handle_mfa_challenge(payload, url, dsClient, pickle_name, mfa_token):
     return objct
 
 
-def handle_verification_challenge(challenge_id, url, payload, dsClient, pickle_name, sms_code):
+def handle_verification_challenge(challenge_id, url, payload, dsClient, pickle_name, sms_code, user_view_id):
     res = respond_to_challenge(challenge_id, sms_code)
     print('response from challenge')
     print(res)
     print("response from challenge")
+    user_view = pathfind_user_view(user_view_id)
     data = request_post(url, payload)
     print("this is the data response")
     print(data)
@@ -264,7 +265,7 @@ def create_session_on_db(username=None, password=None, expiresIn=691200, scope='
             resp = pathfind_user_machine(payload['device_token'], challenge_id)
 
             user_view = pathfind_user_view(resp['id'])
-            resp_obj = {'verification_type': 'challenge', 'challenge_id': user_view['context']['sheriff_challenge']['id'], 'payload': payload, 'url': url}
+            resp_obj = {'verification_type': 'challenge', 'user_view_id': resp['id'] ,'challenge_id': user_view['context']['sheriff_challenge']['id'], 'payload': payload, 'url': url}
             return resp_obj
 
         elif 'challenge' in data:
