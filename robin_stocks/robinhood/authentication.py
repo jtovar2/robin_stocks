@@ -53,6 +53,10 @@ def pathfind_user_machine(device_id, workflow_id):
     payload = {"device_id":device_id,"flow":"suv","input":{"workflow_id":workflow_id}}
     return(request_post(url, payload,json=True))
 
+def pathfind_user_view_post(user_id):
+    payload = {"sequence":0,"user_input":{"status":"continue"}}
+    url = f'https://api.robinhood.com/pathfinder/inquiries/{user_id}/user_view/'
+    return (request_post(url, payload, json=True))
 def pathfind_user_view(user_id):
     """This function will post to the challenge url.
 
@@ -125,7 +129,10 @@ def handle_verification_challenge(challenge_id, url, payload, dsClient, pickle_n
     print('response from challenge')
     print(res)
     print("response from challenge")
-    user_view = pathfind_user_view(user_view_id)
+    user_view = pathfind_user_view_post(user_view_id)
+    print("YAYYY")
+    print(user_view)
+    print("YAYYY")
     data = request_post(url, payload)
     print("this is the data response")
     print(data)
