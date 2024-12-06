@@ -122,8 +122,13 @@ def handle_mfa_challenge(payload, url, dsClient, pickle_name, mfa_token):
 
 def handle_verification_challenge(challenge_id, url, payload, dsClient, pickle_name, sms_code):
     res = respond_to_challenge(challenge_id, sms_code)
+    print('response from challenge')
     print(res)
+    print("response from challenge")
     data = request_post(url, payload)
+    print("this is the data response")
+    print(data)
+    print("THIS IS THE DATA RESPONSE FROM")
     objct = dict()
     objct['success'] = False
     if 'access_token' in data:
