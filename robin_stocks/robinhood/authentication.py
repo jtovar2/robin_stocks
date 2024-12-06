@@ -121,11 +121,7 @@ def handle_mfa_challenge(payload, url, dsClient, pickle_name, mfa_token):
 
 
 def handle_verification_challenge(challenge_id, url, payload, dsClient, pickle_name, sms_code):
-    resp = pathfind_user_machine(payload['device_token'], challenge_id)
-
-    user_view = pathfind_user_view(resp['id'])
-
-    res = respond_to_challenge(user_view['context']['sheriff_challenge']['id'], sms_code)
+    res = respond_to_challenge(challenge_id, sms_code)
     print(res)
     data = request_post(url, payload)
     objct = dict()
@@ -243,7 +239,10 @@ def create_session_on_db(username=None, password=None, expiresIn=691200, scope='
         'scope': scope,
         'username': username,
         'challenge_type': challenge_type,
-        'device_token': device_token
+        'device_token': device_token,
+        "token_request_path": "/login",
+        "create_read_only_secondary_token": False,
+        "request_id": str(uuid.uuid4())
     }
 
     if mfa_code:
@@ -257,7 +256,10 @@ def create_session_on_db(username=None, password=None, expiresIn=691200, scope='
             return resp_obj
         elif 'verification_workflow' in data:
             challenge_id = data['verification_workflow']['id']
-            resp_obj = {'verification_type': 'challenge', 'challenge_id': challenge_id, 'payload': payload, 'url': url}
+            resp = pathfind_user_machine(payload['device_token'], challenge_id)
+
+            user_view = pathfind_user_view(resp['id'])
+            resp_obj = {'verification_type': 'challenge', 'challenge_id': user_view['context']['sheriff_challenge']['id'], 'payload': payload, 'url': url}
             return resp_obj
 
         elif 'challenge' in data:
