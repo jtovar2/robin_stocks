@@ -120,7 +120,7 @@ def handle_mfa_challenge(payload, url, dsClient, pickle_name, mfa_token):
 
 
 def handle_verification_challenge(challenge_id, url, payload, dsClient, pickle_name, sms_code):
-    resp = pathfind_user_machine(payload['device_id'], challenge_id)
+    resp = pathfind_user_machine(payload['device_token'], challenge_id)
 
     user_view = pathfind_user_view(resp['id'])
 
