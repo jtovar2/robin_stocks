@@ -297,6 +297,8 @@ def create_session_on_db(username=None, password=None, expiresIn=691200, scope='
             resp = pathfind_user_machine(payload['device_token'], challenge_id)
 
             user_view = pathfind_user_view(resp['id'])
+            if user_view['context']['sheriff_challenge']['type'] == 'prompt':
+                check_prompt_approved(user_view['context']['sheriff_challenge']['id'])
             resp_obj = {'verification_type': 'challenge', 'user_view_id': resp['id'] ,'challenge_id': user_view['context']['sheriff_challenge']['id'], 'payload': payload, 'url': url}
             return resp_obj
 
