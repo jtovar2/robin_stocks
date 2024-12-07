@@ -69,6 +69,19 @@ def pathfind_user_view(user_id):
     """
     url = f'https://api.robinhood.com/pathfinder/inquiries/{user_id}/user_view/'
     return(request_get(url))
+
+def check_prompt_approved(user_id):
+    """This function will post to the challenge url.
+
+    :param challenge_id: The challenge id.
+    :type challenge_id: str
+    :param sms_code: The sms code.
+    :type sms_code: str
+    :returns:  The response from requests.
+
+    """
+    url = f'https://api.robinhood.com/push/{user_id}/get_prompts_status/'
+    return(request_get(url))
 def respond_to_challenge(challenge_id, sms_code):
     """This function will post to the challenge url.
 
@@ -124,11 +137,24 @@ def handle_mfa_challenge(payload, url, dsClient, pickle_name, mfa_token):
     return objct
 
 
-def handle_verification_challenge(challenge_id, url, payload, dsClient, pickle_name, sms_code, user_view_id):
-    res = respond_to_challenge(challenge_id, sms_code)
-    print('response from challenge')
-    print(res)
-    print("response from challenge")
+def handle_verification_challenge(challenge_id, url, payload, dsClient, pickle_name, sms_code, user_view_id, prompt_approved):
+    objct = dict()
+    objct['success'] = False
+    res = None
+    if prompt_approved:
+        res = check_prompt_approved(challenge_id)
+        print('response from challenge')
+        print(res)
+        print("response from challenge")
+        if res['challenge_status'] != 'validated':
+            return objct
+
+    else:
+        res = respond_to_challenge(challenge_id, sms_code)
+        print('response from challenge')
+        print(res)
+        print("response from challenge")
+
     user_view = pathfind_user_view_post(user_view_id)
     print("YAYYY")
     print(user_view)
@@ -137,8 +163,7 @@ def handle_verification_challenge(challenge_id, url, payload, dsClient, pickle_n
     print("this is the data response")
     print(data)
     print("THIS IS THE DATA RESPONSE FROM")
-    objct = dict()
-    objct['success'] = False
+
     if 'access_token' in data:
         token = '{0} {1}'.format(data['token_type'], data['access_token'])
         update_session('Authorization', token)
