@@ -295,9 +295,13 @@ def create_session_on_db(username=None, password=None, expiresIn=691200, scope='
         elif 'verification_workflow' in data:
             challenge_id = data['verification_workflow']['id']
             resp = pathfind_user_machine(payload['device_token'], challenge_id)
+            if resp:
+                print("PATHFIND USER MACHINE ENDPOINT " + str(resp))
 
             user_view = pathfind_user_view(resp['id'])
             is_prompt = False
+            if user_view:
+                print("PATHFIND USER VIEW ENDPOINT " + str(user_view))
             if user_view['context']['sheriff_challenge']['type'] == 'prompt':
                 check_prompt_approved(user_view['context']['sheriff_challenge']['id'])
                 is_prompt = True
