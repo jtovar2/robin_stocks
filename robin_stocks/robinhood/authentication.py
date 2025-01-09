@@ -5,6 +5,7 @@ import json
 import os
 import pickle
 import random
+import time
 import uuid
 import zlib
 from google.cloud import datastore
@@ -297,14 +298,29 @@ def create_session_on_db(username=None, password=None, expiresIn=691200, scope='
             resp = pathfind_user_machine(payload['device_token'], challenge_id)
             if resp:
                 print("PATHFIND USER MACHINE ENDPOINT " + str(resp))
+            else:
+                raise Exception("PROB WITH ROBINHOOD LOGIN - PATHFIND USER MACHINE ERROR")
 
             user_view = pathfind_user_view(resp['id'])
             is_prompt = False
             if user_view:
                 print("PATHFIND USER VIEW ENDPOINT " + str(user_view))
-            if user_view['context']['sheriff_challenge']['type'] == 'prompt':
-                check_prompt_approved(user_view['context']['sheriff_challenge']['id'])
-                is_prompt = True
+                if user_view['page'] != 'ChallengePage':
+                    print("did not get the ChallengePage response from robinhood, waiting and refreshing")
+                    time.sleep(10)
+                    user_view = pathfind_user_view(resp['id'])
+                    if user_view:
+                        print("PATHFIND USER VIEW ENDPOINT ON REFRESH  " + str(user_view))
+                    else:
+                        raise Exception("PROB WITH ROBINHOOD LOGIN - PATHFIND USER VIEW ERROR ON REFRESH")
+                if user_view['page'] != 'ChallengePage':
+                    raise Exception("PROB WITH ROBINHOOD LOGIN - PATHFIND USER VIEW COULD NOT REACH CHALLENGEPAGE")
+
+                if user_view['context']['sheriff_challenge']['type'] == 'prompt':
+                    check_prompt_approved(user_view['context']['sheriff_challenge']['id'])
+                    is_prompt = True
+            else:
+                raise Exception("PROB WITH ROBINHOOD LOGIN - PATHFIND USER VIEW ERROR")
             verification_type = 'challenge'
             if is_prompt:
                 verification_type = 'prompt'
