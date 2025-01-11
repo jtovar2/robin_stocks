@@ -306,15 +306,7 @@ def create_session_on_db(username=None, password=None, expiresIn=691200, scope='
             if user_view:
                 print("PATHFIND USER VIEW ENDPOINT " + str(user_view))
                 if user_view['page'] != 'ChallengePage':
-                    print("did not get the ChallengePage response from robinhood, waiting and refreshing")
-                    time.sleep(10)
-                    user_view = pathfind_user_view(resp['id'])
-                    if user_view:
-                        print("PATHFIND USER VIEW ENDPOINT ON REFRESH  " + str(user_view))
-                    else:
-                        raise Exception("PROB WITH ROBINHOOD LOGIN - PATHFIND USER VIEW ERROR ON REFRESH")
-                if user_view['page'] != 'ChallengePage':
-                    raise Exception("PROB WITH ROBINHOOD LOGIN - PATHFIND USER VIEW COULD NOT REACH CHALLENGEPAGE")
+                    raise Exception("APPROVE LOGIN IN ROBINHOOD, AND TRY AGAIN")
 
                 if user_view['context']['sheriff_challenge']['type'] == 'prompt':
                     check_prompt_approved(user_view['context']['sheriff_challenge']['id'])
